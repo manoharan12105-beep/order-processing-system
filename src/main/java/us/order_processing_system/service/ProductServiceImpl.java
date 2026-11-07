@@ -1,3 +1,4 @@
+
 package us.order_processing_system.service;
 
 import us.order_processing_system.dto.request.ProductRequest;
@@ -7,8 +8,9 @@ import us.order_processing_system.exception.DuplicateResourceException;
 import us.order_processing_system.exception.ResourceNotFoundException;
 import us.order_processing_system.repo.ProductRepository;
 
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +46,7 @@ public class ProductServiceImpl implements ProductService {
     return mapToResponse(savedProduct);
   }
 
-
+  
   @Override
   @Transactional(readOnly = true)
   public ProductResponse getProductById(Long id) {
@@ -57,15 +59,25 @@ public class ProductServiceImpl implements ProductService {
     return mapToResponse(product);
   }
 
-
+  
   @Override
   @Transactional(readOnly = true)
-  public List<ProductResponse> getAllProducts() {
+  public Page<ProductResponse> getAllProducts(Pageable pageable) {
 
-    return productRepository.findAll()
-      .stream()
-      .map(this::mapToResponse)
-      .toList();
+    return productRepository.findAll(pageable)
+      .map(this::mapToResponse);
+  }
+
+  
+  @Override
+  @Transactional(readOnly = true)
+  public Page<ProductResponse> getProductsByName(
+      String name,
+      Pageable pageable) {
+
+    return productRepository
+      .findByNameContainingIgnoreCase(name, pageable)
+      .map(this::mapToResponse);
   }
 
   
@@ -109,24 +121,14 @@ public class ProductServiceImpl implements ProductService {
   private ProductResponse mapToResponse(Product product) {
 
     return new ProductResponse(
-    product.getId(),
-    product.getName(),
-    product.getSku(),
-    product.getDescription(),
-    product.getPrice(),
-    product.getStatus(),
-    product.getCreatedAt(),
-    product.getUpdatedAt()
+      product.getId(),
+      product.getName(),
+      product.getSku(),
+      product.getDescription(),
+      product.getPrice(),
+      product.getStatus(),
+      product.getCreatedAt(),
+      product.getUpdatedAt()
     );
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public List<ProductResponse> getProductsByName(String name) {
-
-    return productRepository.findByNameContainingIgnoreCase(name)
-      .stream()
-      .map(this::mapToResponse)
-      .toList();
   }
 }

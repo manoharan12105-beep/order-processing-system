@@ -6,10 +6,11 @@ import us.order_processing_system.dto.response.ProductResponse;
 import us.order_processing_system.exception.DuplicateResourceException;
 import us.order_processing_system.service.ProductService;
 
-import java.util.List;
-
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,7 +43,7 @@ public class ProductController {
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
-
+  
   @GetMapping("/{id}")
   public ResponseEntity<ProductResponse> getProductById(
       @PathVariable Long id) {
@@ -52,16 +53,29 @@ public class ProductController {
     return ResponseEntity.ok(response);
   }
 
-
+  
   @GetMapping
-  public ResponseEntity<List<ProductResponse>> getAllProducts() {
+  public ResponseEntity<Page<ProductResponse>> getAllProducts(
+      @PageableDefault(size = 10, sort = "name") Pageable pageable) {
 
-    List<ProductResponse> products = productService.getAllProducts();
+    Page<ProductResponse> products = productService.getAllProducts(pageable);
 
     return ResponseEntity.ok(products);
   }
 
+  
+  @GetMapping("/search")
+  public ResponseEntity<Page<ProductResponse>> getProductsByName(
+      @RequestParam String name,
+      @PageableDefault(size = 10, sort = "name") Pageable pageable) {
 
+    Page<ProductResponse> products =
+      productService.getProductsByName(name, pageable);
+
+    return ResponseEntity.ok(products);
+  }
+
+  
   @PutMapping("/{id}")
   public ResponseEntity<ProductResponse> updateProduct(
       @PathVariable Long id,
@@ -72,20 +86,12 @@ public class ProductController {
     return ResponseEntity.ok(response);
   }
 
-
+  
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
 
     productService.deleteProduct(id);
 
     return ResponseEntity.noContent().build();
-  }
-
-  @GetMapping("/search")
-  public ResponseEntity<List<ProductResponse>> getProductsByName(@RequestParam String name) {
-
-    List<ProductResponse> products = productService.getProductsByName(name);
-
-    return ResponseEntity.ok(products);
   }
 }
